@@ -3,15 +3,28 @@
 
 ![Rainman](/uploads/cards.gif)
 
-Have you ever needed to count _things_ like transactions, users or cards? Of course you have. Counting is naturally very straightforward in the Power BI suite, just use `DISTINCTCOUNT` and off you go.
+Have you ever needed to count unique _things_ like transactions, users...or cards? Of course you have, and counting things is thankfully very straightforward in the Power BI suite, just use `DISTINCTCOUNT` and off you go.
 
 Have you ever needed to count lots and lots of things though? Maybe billions of things? You can still use the same function but the sheer amount of data itself may present a different challenge, especially if you're working with Power BI Desktop or Excel.
 
-However, if you're willing to trade some accuracy for increased volume of data points, or rather _more information_, there's an excellent option. If you can live with an approximate count, say ±2%, you can use the [HyperLogLog](https://en.wikipedia.org/wiki/HyperLogLog) algorithm to estimate the number of unique things in your data set, or the _estimated cardinality_ of your data.
+However, if you're willing to trade some accuracy for more data points (or perhaps more _information_) there's an excellent option. If you can live with an error of say ±2%, you can use the [HyperLogLog](https://en.wikipedia.org/wiki/HyperLogLog) algorithm to estimate the number of distinct elements in your data set.
 
 This post lays out how to implement HyperLogLog in Power BI or Power Pivot, and in a way that is surprisingly easy.
 
 ### HyperLogLog to the rescue
-The HyperLogLog algorithm
+The HyperLogLog algorithm has been around since 2007, see [here](http://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf) for the original research paper. It builds on similar previous work as the problem itself, i.e. counting lots of things, is of course nothing new.
+
+The idea, as per Wikipedia, is simply that "the cardinality of a multiset of uniformly distributed random numbers can be estimated by calculating the maximum number of leading zeros in the binary representation of each number in the set".
+
+Thanks Wikipedia, that's a lot of complicated words. I'm no mathematician (or linguist) but I'll make an attempt at translating this into English:
+
+"The number of different things is a list that may include each thing more than once can be estimated by calculating t"
+
+Cardinality = Number of different things
+Multiset = A list of things that may include each thing more than once
+Uniformly distributed random number = (In our case) a truly random number with the same binary length
+
+If the number of leading zeroes is `n` then the number of distinct elements is `2n`
+
 
 ### Implementing
