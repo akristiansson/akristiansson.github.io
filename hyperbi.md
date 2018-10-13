@@ -12,17 +12,23 @@ However, if you're willing to trade some accuracy for more data points (or perha
 This post lays out how to implement HyperLogLog in Power BI or Power Pivot, and in a way that is surprisingly easy.
 
 ### HyperLogLog to the rescue
-The HyperLogLog algorithm has been around since 2007, see [here](http://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf) for the original research paper. It builds on similar previous work as the problem itself, i.e. counting lots of things, is of course nothing new.
+The HyperLogLog algorithm has been around since 2007, see [here](http://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf) for the original research paper. It builds on similar prior work as the problem itself, i.e. counting lots of things, is nothing new.
 
-The idea, as per Wikipedia, is simply that "the cardinality of a multiset of uniformly distributed random numbers can be estimated by calculating the maximum number of leading zeros in the binary representation of each number in the set".
+The idea behind the LogLog family of algorithms is, as per Wikipedia, simply that "the cardinality of a multiset of uniformly distributed random numbers can be estimated by calculating the maximum number of leading zeros in the binary representation of each number in the set".
 
-Thanks Wikipedia, that's a lot of complicated words. I'm no mathematician (or linguist) but I'll make an attempt at translating this into English:
+Thanks Wikipedia, that really cleared things up. I'm no mathematician (or linguist) but I'll make an attempt at translating this into English:
 
-"The number of different things is a list that may include each thing more than once can be estimated by calculating t"
+"The number of different _things_ in a list of _non-unique random numbers_ with the _same binary length_ can be estimated by calculating the _maximum number of leading zeroes_ in the binary representation of that same number."
 
-Cardinality = Number of different things
-Multiset = A list of things that may include each thing more than once
-Uniformly distributed random number = (In our case) a truly random number with the same binary length
+Any better? What's key here is the fact that in a _random_ binary number the chance of a zero in each position is 50/50. And just like when flipping a coin, to produce a long sequence of leading zeroes you probably need to flip a lot of coins.
+
+Let's try an example, let's go back to counting cards.
+
+Suit  Value Hash
+H     2
+H     3
+H     4
+
 
 If the number of leading zeroes is `n` then the number of distinct elements is `2n`
 
