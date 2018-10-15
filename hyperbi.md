@@ -20,7 +20,9 @@ Thanks Wikipedia, that really cleared things up. I'm no mathematician (or lingui
 
 "The number of different _things_ in a list of _non-unique random numbers_ with the _same binary length_ can be estimated by calculating the _maximum number of leading zeroes_ in the binary representation of that same number."
 
-Any better? What's key here is the fact that in a _random_ binary number the chance of a zero in each position is 50/50. And just like when flipping a coin, to produce a long sequence of leading zeroes you probably need to flip a lot of coins.
+Any better? What's key here is the fact that in a _random_ binary number the chance of a zero in each position is 50/50, a coinflip. And just like when flipping a coin, to produce a long sequence of leading zeroes you probably need to flip a lot of coins, or in this case observe a lot of different elements.
+
+0.5 x 0.5 x 0.5
 
 Let's try an example, let's go back to counting cards.
 
