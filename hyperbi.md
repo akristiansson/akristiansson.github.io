@@ -33,17 +33,30 @@ So, with random independent 0's and 1's it's not surprising to hear that the sec
 |001xx  | 3                    | 0.5<span><sup>3</sup></span> = 12.5% | 2<sup>2</sup> = 4 |
 |0001x  | 4                    | 0.5<sup>4</sup> = 6.25% | 2<sup>3</sup> = 8 |
 
-0.5 x 0.5 x 0.5
+This approximation might strike you as quite naive, and it is. HyperLogLog doesn't quite end there, to minimise variance we group the numbers into buckets and work with a harmonised mean of the most significant bit. The more buckets, the more accurate but also more data to keep in memory ultimately.
 
-Let's try an example, let's go back to counting cards.
+The number of buckets will be a factor of 2n, i.e. 1, 2, 4, 8 and so on. To get an error rate around ±5% we have to go up to 512 buckets. Of course, if we don't have enough numbers we won't fill all buckets but that's OK.
 
-Suit  Value Hash
-H     2
-H     3
-H     4
-
-
-If the number of leading zeroes is `n` then the number of distinct elements is `2n`
-
+If you have a desired error rate in mind you can resolve the number of buckets as follows:
 
 ### Implementing
+
+First step in implementing this solution is to get our hands on some random numbers. Chances are we're counting something like users or orders with an identifier attached, in this example we'll work with user IDs.
+
+Unless our user IDs just happen to be random integers (usually 32 or 64-bit) we need transform them into just that. Unfortunately, there's really no obvious way of generating these using Power BI or Power Query. There _is_ a way of course, it's just a bit clunky.
+
+M can compress binary data as gzip, and the gzip footer just so happens to contain a 32-bit checksum which we can access and use as a random hash:
+
+``` 'M'
+CalculateHash = (x as text) as number => BinaryFormat.UnsignedInteger32(
+    Binary.FromList(
+        List.FirstN(
+            List.LastN(
+                Binary.ToList(
+                    Binary.Compress(Text.ToBinary(x, BinaryEncoding.Base64), Compression.GZip)
+                ),
+            8),
+        4)
+    )
+)
+```
