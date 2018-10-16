@@ -41,22 +41,52 @@ If you have a desired error rate in mind you can resolve the number of buckets a
 
 ### Implementing
 
-First step in implementing this solution is to get our hands on some random numbers. Chances are we're counting something like users or orders with an identifier attached, in this example we'll work with user IDs.
+First step in implementing this solution is to get our hands on some random numbers. Chances are we're counting something like users or orders with an identifier attached, and in this example we'll count unique users from the Contoso `FactOnlineSales` table. More specifically, we're going to aggregate sales and quantity by day and product while maintaining an rough count of customers.
 
-Unless our user IDs just happen to be random integers (usually 32 or 64-bit) we need transform them into just that. Unfortunately, there's really no obvious way of generating these using Power BI or Power Query. There _is_ a way of course, it's just a bit clunky.
-
-M can compress binary data as gzip, and the gzip footer just so happens to contain a 32-bit checksum which we can access and use as a random hash:
-
-``` 'M'
-CalculateHash = (x as text) as number => BinaryFormat.UnsignedInteger32(
-    Binary.FromList(
-        List.FirstN(
-            List.LastN(
-                Binary.ToList(
-                    Binary.Compress(Text.ToBinary(x, BinaryEncoding.Base64), Compression.GZip)
-                ),
-            8),
-        4)
-    )
-)
+We're going to use this query as our source data (ca. 12m rows)
+```sql
+select
+  DateKey
+ ,ProductKey
+ ,CustomerKey
+ ,SalesAmount
+ ,SalesQuantity
+from dbo.FactOnlineSales
 ```
+
+First things first, unless our ID's just happen to be random integers (usually 32 or 64-bit) we need transform them into just that. Unfortunately, there's really no obvious way of generating these using Power BI or Power Query (that's to say there _is_ a way, it's just a bit clunky). Often, with a bit of luck or ingenuity, you can do this first step in your database (which will most likely be quicker if nothing else) but we'll stick to Power Query, i.e. M, for now.
+
+M can compress binary data as gzip, and the gzip footer just so happens to contain a 32-bit checksum which we can access and use as a random hash. The footer is 8 bytes, the first 4 of which contain the checksum. We convert the gzip binary to a list in order to extract the relevant bytes and in turn convert this to a non-negative number.
+
+```
+let
+  CompressText = (x as text) as binary =>
+    Binary.Compress(
+      Text.ToBinary(x, BinaryEncoding.Base64),
+      Compression.GZip
+    ),
+  GZipChecksum = (x as text) as binary =>
+    Binary.FromList(
+      List.FirstN(
+        List.LastN(
+          Binary.ToList(CompressText(x))
+          ,8
+        )
+        ,4
+      )
+    ),
+  CalculateHash = (x as text) as number =>
+    BinaryFormat.UnsignedInteger32(
+      GZipChecksum(x)
+    ),
+  Source = [...]
+in
+  Source
+```
+
+What we're going to do using this function is to Assign a `hash_value` to each user ID (i.e. `CustomerKey`)
+
+We're then going to   
+- Use the hash to create a bucket number (`bucket_number`)
+- Group the data by `bucket_number`, `DateKey` and `ProductKey` and add aggregates for `SalesAmount` and `SalesQuantity` as well as the _minimum_ `hash_value`
+- Calculate the most significant bit (`bucket_msb`) from the `hash_value`
