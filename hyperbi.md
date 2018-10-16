@@ -26,8 +26,8 @@ So, with random independent 0's and 1's it's not surprising to hear that the sec
 
 |Binary | Most significant bit | Share of elements       | Approximate count |
 |-------|----------------------|-------------------------|-------------------|
-|1xxxx  | 1                    | 0.5<sup>1</sup> = 50%   | 2<sup>0</sup> = 1 |
-|01xxx  | 2                    | 0.5<sup>2</sup> = 25%   | 2<sup>1</sup> = 2 |
+|1xxxx  | 1                    | 0.5&#x00B9 = 50%   | 2<sup>0</sup> = 1 |
+|01xxx  | 2                    | 0.5&#x00B2 = 25%   | 2<sup>1</sup> = 2 |
 |001xx  | 3                    | 0.5<sup>3</sup> = 12.5% | 2<sup>2</sup> = 4 |
 |0001x  | 4                    | 0.5<sup>4</sup> = 6.25% | 2<sup>3</sup> = 8 |
 
