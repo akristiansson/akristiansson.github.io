@@ -89,7 +89,7 @@
 					}
 				}
 			}
-			h1, h2 { font-family: 'Merriweather', serif; font-size: 4em; line-height: 1.1em; font-weight: 900; font-style: italic; margin: 0 0 20px; color: #3b3b3b;
+			h1, h2 { font-family: 'Merriweather', serif; font-size: 3em; line-height: 1.1em; font-weight: 900; font-style: italic; margin: 0 0 20px; color: #3b3b3b;
 				a { color: $grey-color-dark; @include transition(color .1s ease);
 					&:hover { color: $primary-color; }
 				}
@@ -139,7 +139,7 @@
 			ul { list-style-type: disc; list-style-position: inside; }
 
 			p { font-family: 'Roboto', sans-serif; font-size: 1.2em; font-weight: 400; color: #333; 
-				margin: 15px 0; line-height: 27px;
+				margin: 15px 0; line-height: 1.5em;
 				& > code { font-size: 14px; padding: 3px 6px; background: $background-color; border: 1px solid $grey-color-lightest; }
 			}
 
