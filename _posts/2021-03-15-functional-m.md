@@ -15,7 +15,7 @@ tags:
     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/F_of_x.svg/1280px-F_of_x.svg.png" style="max-width: 841px;"/>
 </figure>
 
-Power Query (or rather M) is a functional language. This simply means that functions can be passed around just as any other variable—stored in lists, records or tables just like any other variable etc. More importantly, a function can take another function as its input, or itself return a new function.
+Power Query (or rather M) is a functional language. This simply means that functions can be passed around just as any other variable—or stored in lists, records and tables just like any other value. As a consequence, a function can take other functions as arguments, or itself return a new function.
 
 I want to delve a bit deeper into this at some point but this post will give a very tangible example how applying functional techniques can make your code both easier to write and easier to read.
 
