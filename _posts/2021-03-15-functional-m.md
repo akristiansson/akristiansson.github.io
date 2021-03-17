@@ -15,7 +15,7 @@ tags:
     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/F_of_x.svg/1280px-F_of_x.svg.png" style="max-width: 841px;"/>
 </figure>
 
-Power Query (or rather M) is a functional language. This means simply that functions can be passed around just as any other variable would be, a function can for example take another function as input or return a new function.
+Power Query (or rather M) is a functional language. This simply means that functions can be passed around just as any other variable—stored in lists, records or tables just like any other variable etc. More importantly, a function can take another function as its input, or itself return a new function.
 
 I want to delve a bit deeper into this at some point but this post will give a very tangible example how applying functional techniques can make your code both easier to write and easier to read.
 
@@ -33,7 +33,10 @@ CalculateHash = (x as text) as text => Binary.ToText(
         List.FirstN(
             List.LastN(
                 Binary.ToList(
-                    Binary.Compress(Text.ToBinary(x, BinaryEncoding.Base64), Compression.GZip)
+                    Binary.Compress(
+                        Text.ToBinary(x, BinaryEncoding.Base64), 
+                        Compression.GZip
+                    )
                 ),
             8), 
         4)
@@ -47,8 +50,8 @@ We can write this in a more idiomatic Power Query fashion, binding each step to 
 
 {% highlight powerquery %}
 CalculateHash = (x as text) as text => let
-    #"Convert Text to Binary" = Text.ToBinary(x, BinaryEncoding.Base64),
-    #"Compress binary data" = Binary.Compress(#"Convert Text to Binary", Compression.GZip),
+    #"Convert text to binary" = Text.ToBinary(x, BinaryEncoding.Base64),
+    #"Compress binary data" = Binary.Compress(#"Convert text to binary", Compression.GZip),
     #"Convert binary to list" = Binary.ToList(#"Compress binary data"),
     #"Extract footer" = List.LastN(#"Convert binary to list", 8),
     #"Extract checksum" = List.FirstN(#"Extract footer", 4),
@@ -57,11 +60,11 @@ CalculateHash = (x as text) as text => let
     in #"Convert checksum to hexadecimal"
 {% endhighlight %}
 
-This is a good approach if you want to see each applied step in the Power Query editor (or if you want others to) but it's very hard to read the code itself. Both these examples make me question the typographical choices I made for this blog.
+This is a good approach if you want to see each applied step in the Power Query editor (or if you want others to) but it's very hard to read the code itself. 
 
 ## Pipes
 
-Working with R (or other more or less strictly functional languages such as F#) there is often the notion of a pipe operator. 
+Working with R (or other more or less strictly functional languages such as F#) there is often the notion of a *pipe operator*. 
 
 Say we want to take a list of numbers, filter out the odd ones, double the remaining even numbers and then reverse the list. Working with R and the Margittr package it looks something like:
 
@@ -73,7 +76,7 @@ x <- seq(1,9) %>%
   rev
 {% endhighlight %}
 
-F# is much cleaner looking but the principle remains the same.
+F# is much cleaner looking—the pipe operator is built in to the language rather than reliant on an external package like R—but the principle remains the same.
 
 {% highlight fsharp %}
 let x = 
@@ -89,7 +92,7 @@ Can we make Power Query behave in the same way? Yes we can (kind of)!
 
 ## Pipes in Power Query
 
-We don't have the ability to implement new unary operators in Power Query/M (that is operators that sit in between its inputs, such as `+` or `-`) but as the language is functional we can come up with a pretty slick pretend solution.
+We don't have the ability to implement new infix operators in Power Query/M (that is operators that sit in between its inputs, such as `+`, `-` or `and`) but as the language is functional we can come up with a pretty slick alternative.
 
 The corresponding M syntax will look like this:
 
@@ -116,7 +119,7 @@ let Hash = Pipe(1234)(
   )
 {% endhighlight %}
 
-The `each` operator you see dotted around here is syntactic sugar (a shortcut plain and simple) for a one argument lambda (anonymous function) such as `(x) => ...`. 
+The `each` operator you see dotted around here is syntactic sugar (a shortcut) for a [one argument lambda](https://docs.microsoft.com/en-us/powerquery-m/m-spec-functions#simplified-declarations) such as `(_) => _ + 1`. 
 
 This means that `each List.Select(_, Number.IsEven)` is just a slightly shorter version of `(x) => List.Select(x, Number.IsEven)`. The syntax should look familiar as you will see these anonymous functions being generated automatically by the Power Query user interface all the time.
 
@@ -124,7 +127,7 @@ So, how does it work? Here's how I went about it...
 
 ## Building a simple M pipe syntax
 
-Let's start with a value `x`, to that value let's apply a function `f1`, and to the result of that function let's apply `f2`, then `f3` and so on. It then seems a good idea that we have an arbitrary length `list` of `function` to work with. 
+Let's start with a value `x`, and to that value let's apply a function `f1`, to the result of that function let's apply `f2` then `f3` and so on. It then seems a good idea to work with an arbitrary length `list` of `function` and a variable of type `any`. 
 
 We want to apply these functions in turn and then return a single value, which is a pefect task for the built-in `List.Accumulate` [function](https://docs.microsoft.com/en-us/powerquery-m/list-accumulate). 
 
@@ -145,11 +148,11 @@ let List.Sum2 = (list as list) =>
     )
 {% endhighlight %}
 
-The accumulator function is a two argument lambda, the first argument captures the state of the operation while the second argument captures the current value in the list. With the `seed` argument set to `0` the very first calculation when running this over a list of the numbers 1-9 will then be `(0, 1) => 0 + 1` then  `(1, 2) => 1 + 2` and so on.
+The accumulator function is a two argument lambda, the first argument captures the state of the operation while the second argument captures the current value in the list. With the `seed` argument set to `0` the very first calculation step when iterating over a list of numbers `1-9` will be `(0, 1) => 0 + 1`, then  `(1, 2) => 1 + 2` and so on.
 
 If the current value instead is a function we want to apply to the state (remember functions are just values) we simply define the accumulator as `(x, f) => f(x)`. 
 
-And the heart of our final function is then:
+And the heart of our final function then is this:
 
 {% highlight powerquery %}
 List.Accumulate(
@@ -172,9 +175,9 @@ Pipe = (object as any) as function =>
     in Function.From(type function (f as function) as any, RunPipe)
 {% endhighlight %}
 
-The `Pipe` function actually _return_ a function, hence the `Pipe(...)(...)` syntax when we invoke it. We could implement this as a two argument function that takes an object and a list but I personally find the `Pipe(..., {...})` option a bit less easy on the eyes.
+The `Pipe` function actually _return_ a function, hence the `Pipe(...)(...)` syntax when we invoke it. We could implement this as a two argument function that takes an object and a list but I personally find the `Pipe(..., {...})` option a bit less easy on the eye.
 
-This technique is called a closure, which means we can also apply a transformation in stages. For instance, let's define `let p = Pipe({1..9})` and then base multiple calculations based off this, e.g. `sumIsEven = p(List.Sum, Number.IsEven)` and `hasEvenNumberOfElements = p(List.Length, Number.IsEven)`.
+This technique is called a closure, which means we can also apply any transformation in stages. For instance, let's define `let p = Pipe({1..9})` and then base multiple calculations based off of this, e.g. `sumIsEven = p(List.Sum, Number.IsEven)` and `hasEvenNumberOfElements = p(List.Length, Number.IsEven)`.
 
 The very last part of our pipe functions `Function.From(type function (f as function) as any, RunPipe)` is what allows the returned function to take an arbitrary number of arguments. `Function.From` returns a function which converts its arguments into a list and applies it to the function specified in the second argument.
 
